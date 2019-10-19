@@ -9,29 +9,18 @@ function setupSchools(){
 
     // Change heading to subjects
     $('#branchLists h3').text('Schools')
-    let SES = {
-        name : 'SES',
-        tData : ['Electrical Engg.', 'Electronics and Communication Engg.', 'Computer Scince Engg.'],
-        tSearchID : ['ee', 'ec', 'cs']
-    }
-    let SMS = {
-        name : 'SMS',
-        tData : ['Mechanical Engg.'],
-        tSearchID : ['me']
-    }
-    let SIF = {
-        name : 'SIF',
-        tData : ['Civil Engg.'],
-        tSearchID : ['ce']
-    }
 
-    let SEST = new BranchTemplate(SES);
-    let SMST = new BranchTemplate(SMS);
-    let SIFT = new BranchTemplate(SIF);
-    SEST.propagateTemplate();
-    SMST.propagateTemplate();
-    SIFT.propagateTemplate();
+    // Stores hardcoded schools names and degrees offered by each school and their ID
+    let schools = getSchoolList();
 
+    //Propagates all school templates
+    schools.forEach(function(item){
+        let template = new BranchTemplate(item);
+        template.propagateTemplate();
+        // BranchTemplateArr.push(template);
+    });
+
+    // Set on click listener for each degree/branch
     branchOnClick();
 }
 
@@ -40,12 +29,13 @@ function branchOnClick(){
     // and add semseter wise subject list in the div
     $('.cardContainer p').click(function(){
         branchID = $(this).find('input').val();
-        console.log(branchID);
+        var branchName = $(this).text();
+        console.log(branchName);
         // Clear cardContainer
         $('.cardContainer').empty();
 
         // Change heading to subjects
-        $('#branchLists h3').text('Subjects')
+        $('#branchLists h3').text(branchName);
 
 
         // Create a button to return to previous page
@@ -65,17 +55,16 @@ function branchOnClick(){
 
         // Call Controller to get subject list for that branch
         // Expected format
-        // jsArray = [sem1, sem2, ...]
-        // sem1 = [subject_1, subject_2, ...]
+        // jsArray = [subject_1, subject_2, ...]
         // subject_1 = {
         //      subjectName = ,
         //      subjectCode = , (subjectCode will act as subjectID)
         //      Any other Info
         // };
 
-        subjectArr = getSubjectsByBranch(branchID);
+        subjectArr = getSubjectsByBranch(branchID.toUpperCase());
 
-        // Propagate semester wise subjects
+        // Propagate subjects
         let subjectTemp = new SubjectTemplate(subjectArr);
         subjectTemp.propagateTemplate();
 
@@ -96,16 +85,19 @@ class BranchTemplate{
     }
     propagateTemplate(){
         if ('content' in document.createElement('template')) {
-            var template = $('#myTemplate');
-            var container = $('.cardContainer');
+            let template = $('#schoolTemplate');
+            let container = $('.cardContainer');
 
             let clone = template.prop('content');
 
-            var tHeading = $(clone).find('h3');
+            // Set Heading
+            let tHeading = $(clone).find('h3');
             tHeading.text(this.tHeading);
 
+            // Fill data in lists
             this.fillData($(clone).find('.links'));
 
+            // Inserts template to the web page
             container.append(template.html());
 
             //Reset template
@@ -117,9 +109,12 @@ class BranchTemplate{
             alert("HTML template element is not supported.")
         }
     }
+
+    // Method that adds degrees/branchs in the school template
     fillData(cardContent){
-        var L = this.tData.length, i = 0, pTag, ipTag;
+        let L = this.tData.length, i = 0, pTag, ipTag;
         if(this.tData.length !== this.tSearchID.length){
+            // Only for testing
             console.log('Unequal tData and tSearchID array!');
         }
         for(i = 0; i < L; i++){
@@ -142,24 +137,23 @@ class SubjectTemplate{
     }
     propagateTemplate(){
         if ('content' in document.createElement('template')) {
-            var template = $('#myTemplate');
-            var container = $('.cardContainer');
+            let template = $('#branchTemplate');
+            let container = $('.cardContainer');
 
-            // tHeading.text(this.tHeading);
-            for(var i = 0; i < this.subArray.length; i++){
-                let clone = template.prop('content');
+            // Makes seperate templates for each of the semester
+              let clone = template.prop('content');
 
-                let semHeading = $(clone).find('h3');
-                semHeading.text('Semseter - ' + (i+1));
+              // Sets heading
+              let subHeading = $(clone).find('h3');
+              subHeading.text('Subjects');
 
-                this.fillSubjects($(clone).find('.links'), this.subArray[i]);
-                // this.fillData($(clone).find('.links'));
-                container.append(template.html());
+              // Fills the semester-i's template with the courses
+              this.fillSubjects($(clone).find('.links'), this.subArray);
+              container.append(template.html());
 
-                //Reset template
-                $(clone).find('h3').empty();
-                $(clone).find('.links').empty();
-            }
+              //Reset template
+              $(clone).find('h3').empty();
+              $(clone).find('.links').empty();
          }
          else {
             // the HTML template element is not supported.
@@ -167,7 +161,7 @@ class SubjectTemplate{
         }
     }
     fillSubjects(subjectListDiv, data){
-        var L = data.length, i = 0, aTag, pTag;
+        let L = data.length, i = 0, aTag, pTag;
         for(i = 0; i < L; i++){
             aTag = $('<a>');
             aTag.text(data[i].subjectName + ' ' + data[i].subjectCode);
@@ -178,70 +172,38 @@ class SubjectTemplate{
     }
 }
 
-
-// Data for testing
-/*
-subjectArr = [[{
-        subjectName: 'Physics',
-        subjectCode: 'PH1L001'
-    },
-    {
-        subjectName: 'PDS',
-        subjectCode: 'CS1L001'
-    },
-    {
-        subjectName: 'Mechanics',
-        subjectCode: 'ME1L001'
-    },
-    {
-        subjectName: 'Maths',
-        subjectCode: 'MA1L001'
-    },],
-
-
-    [{
-        subjectName: 'Chemistry',
-        subjectCode: 'CH1L001'
-    },
-    {
-        subjectName: 'Maths',
-        subjectCode: 'MA1L002'
-    },
-    {
-        subjectName: 'Electrical Technology',
-        subjectCode: 'EE1L001'
-    },
-    {
-        subjectName: 'Learning English',
-        subjectCode: 'HS1L001'
-    }],
-
-
-    [{
-        subjectName: 'Data Structures',
-        subjectCode: 'CS2L003'
-    },
-    {
-        subjectName: 'Discrete Structures',
-        subjectCode: 'CS2L001'
-    },
-    {
-        subjectName: 'Introduction to Electronics',
-        subjectCode: 'EC2L001'
-    },
-    {
-        subjectName: 'Signals and Systems',
-        subjectCode: 'EC2L002'
-    },
-    {
-        subjectName: 'Introduction to Bio-Science',
-        subjectCode: 'IDT2L001'
-    },
-    {
-        subjectName: 'Introduction to Economics',
-        subjectCode: 'HS2L007'
-    },
-
-
-    ] ];
-*/
+function getSchoolList(){
+  return [{
+      name: 'SBS',
+      tData: ['Physics', 'Chemistry', 'Maths'],
+      tSearchID: ['PH', 'CH', 'MA']
+  },{
+      name: 'SEOCS',
+      tData: ['All Courses'], //Suggest degrees offered by SEOCS
+      tSearchID: ['OC'] // suggest an appropriate code for SEOCS
+  },{
+      name: 'SES',
+      tData: ['Computer Scince Engineering', 'Electronics and Communication Engineering', 'Electrical Engineering'],
+      tSearchID: ['CS', 'EC', 'EE']
+  },{
+      name: 'SHSS&M', //Suggest degrees offered by SHSS&M
+      tData: ['All Courses'],
+      tSearchID: ['HS'],
+  },{
+      name: 'SIF',
+      tData: ['Civil Engineering'],
+      tSearchID: ['CE'],
+  },{
+      name: 'SMS',
+      tData: ['Mechanical Engineering'],
+      tSearchID: ['ME'],
+  },{
+      name: 'SMMME',
+      tData: ['Metallurgical and Materials Engineering'],
+      tSearchID: ['MM'],
+  },{
+      name: 'Others',
+      tData: ['IDT Courses'], //Suggest a proper name for IDT Courses
+      tSearchID: ['ID'] //Suggest proper code
+  }];
+}
